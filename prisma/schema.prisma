@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. ตารางผู้ใช้งาน
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile      Profile?
+  achievements Achievement[]
+  portfolio    Portfolio?
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+// 2. ตารางข้อมูลส่วนตัวนักเรียน
+model Profile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  firstname        String
+  lastname         String
+  schoolName       String?
+  gpax             Float?
+  targetFaculty    String?
+  targetUniversity String?
+  bio              String?
+  avatarUrl        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 3. ตารางผลงานและเกียรติบัตร
+model Achievement {
+  id             String    @id @default(cuid())
+  studentId      String
+  title          String
+  description    String?
+  category       Category
+  eventDate      DateTime?
+  certificateUrl String?
+  isFeatured     Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+enum Category {
+  ACADEMIC
+  SPORTS
+  ARTS
+  VOLUNTEER
+  LEADERSHIP
+}
+
+// 4. ตาราง Portfolio สำหรับตั้งค่าลิงก์สาธารณะ
+model Portfolio {
+  id         String   @id @default(cuid())
+  studentId  String   @unique
+  slug       String   @unique
+  isPublic   Boolean  @default(true)
+  viewsCount Int      @default(0)
+  passcode   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
